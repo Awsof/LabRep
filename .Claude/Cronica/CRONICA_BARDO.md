@@ -65,7 +65,7 @@ Todo middleware `requireAuth()` extrai `repId` do JWT Clerk verificado no servid
 >
 > **Por que não reverter:** Hardcodar credenciais em qualquer arquivo de código é violação crítica de segurança, especialmente em repositório público. Scripts de infraestrutura devem sempre ler credenciais de variáveis de ambiente ou de um gerenciador de segredos. Regra aplicável a TODO arquivo do projeto sem exceção.
 
-> **Ação pendente (fora do código):** O token `eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9...` esteve exposto publicamente entre os commits `063851c` e `34c5881`. **O usuário deve revogar este token no dashboard TursoDB e gerar um novo.** O histórico git foi limpo, mas o token deve ser considerado comprometido.
+> **Ação concluída (2026-06-04):** Todos os tokens do banco foram invalidados via "Invalidate All Tokens" no dashboard TursoDB. Novo token gerado com `iat: 1780613651` (diferença confirmada de 1181s em relação ao token comprometido). Conexão verificada com sucesso — 7 tabelas acessíveis. `.env` atualizado com novo token. **Correção #1 totalmente encerrada.**
 
 ---
 
@@ -82,7 +82,7 @@ Mago da Ilusão     → APROVADO (sem frontend — dentro do escopo declarado)
 Mago Evocador      → APROVADO (validate.js e auth.js robustos contra inputs adversariais)
 ```
 
-**Autorização:** Sprint 1 pode iniciar após rotação do TURSO_AUTH_TOKEN.
+**Autorização:** ✅ Sprint 1 AUTORIZADO. Token rotacionado e verificado em 2026-06-04.
 
 ---
 
