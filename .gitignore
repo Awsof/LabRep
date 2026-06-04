@@ -1,0 +1,23 @@
+# Ambiente
+.env
+.env.local
+.env.*.local
+
+# Vercel
+.vercel/
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+
+# Build artifacts (sem build step — mas por precaução futura)
+dist/
+build/

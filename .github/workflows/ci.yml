@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Verificar sintaxe JS (api/)
+        run: |
+          for f in $(find api -name "*.js"); do
+            node --check "$f" && echo "OK: $f" || exit 1
+          done
+
+      - name: Verificar sintaxe JS (public/)
+        run: |
+          for f in $(find public/assets/js -name "*.js"); do
+            node --check "$f" && echo "OK: $f" || exit 1
+          done
+
+      - name: Garantir ausência de console.log em produção
+        run: |
+          if grep -r "console\.log" api/ public/assets/js/ --include="*.js" | grep -v "if.*DEV"; then
+            echo "ERRO: console.log encontrado fora de bloco DEV"
+            exit 1
+          fi
+          echo "Nenhum console.log de produção encontrado."
