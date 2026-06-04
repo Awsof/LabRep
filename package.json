@@ -1,0 +1,25 @@
+{
+  "name": "labrep",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Awsof/LabRep.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Awsof/LabRep/issues"
+  },
+  "homepage": "https://github.com/Awsof/LabRep#readme",
+  "dependencies": {
+    "@clerk/backend": "^3.5.0",
+    "@libsql/client": "^0.17.3",
+    "stripe": "^22.2.0"
+  }
+}
