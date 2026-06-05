@@ -93,12 +93,64 @@ Mago Evocador      → APROVADO (validate.js e auth.js robustos contra inputs ad
 **Banco:** libsql://labrep-awsof.aws-us-east-1.turso.io (27 objetos)
 **Projeto local:** C:\Users\antonio.filho\Documents\LabRep
 
-**Próxima missão (Sprint 1 — Semanas 5–6):**
-- Completar `CLERK_SECRET_KEY` no `.env`
-- Criar `public/index.html` (SPA entry point)
-- Criar `public/assets/js/router.js` (hash routing)
-- Criar `public/assets/js/api.js` (fetch wrapper com JWT inject)
-- Criar `public/assets/js/auth.js` (Clerk SDK vanilla)
-- Criar `public/assets/css/design-system.css`
-- Conectar projeto ao Vercel + configurar variáveis de ambiente
-- Critério de conclusão: `GET /api/v1/auth/me` com JWT válido → 200
+**Sprint 1 CONCLUÍDO (commit 153e465):** design system, auth Clerk vanilla, router, api.js, dashboard, manifest.json, sw.js
+
+---
+
+### Era 2 — Sprint 2: Páginas e API (2026-06-04)
+**Decreto do Arquimago:** SELADO ✅ — Decreto #2
+
+#### Artefatos entregues
+
+**Páginas frontend (public/assets/js/pages/):**
+- `carteira.js`: lista paginada com busca textual, filtros de status/tipo
+- `cliente.js`: ficha completa (dados + timeline de interações + modal de registro)
+- `cliente-form.js`: formulário de criação com CNPJ lookup automático via BrasilAPI
+- `grupos.js`: lista de grupos/redes com modal de criação
+- `grupo.js`: detalhe de grupo com lista de membros
+- `alertas.js`: pendências do dia com marcar como lido
+- `pipeline.js`: gate de plano Pro (funcional, sem implementação Pro)
+- `configuracoes.js`: perfil, plano e logout
+- `utils.js`: helpers compartilhados (escHtml, formatCNPJ, diasClass, etc.)
+
+**API (api/v1/):**
+- `clientes/index.js`: GET (lista paginada + busca + filtros) + POST (criar com validação CNPJ)
+- `clientes/[id].js`: GET (ficha com joins) + PUT (update parcial via COALESCE)
+- `clientes/cnpj/[cnpj].js`: proxy BrasilAPI + dedup check por rep_id
+- `alertas/index.js`: GET (pendentes do rep)
+- `alertas/[id]/lido.js`: PATCH (marcar como lido)
+- `grupos/index.js`: GET (lista com agregados) + POST (criar)
+- `grupos/[id].js`: GET (grupo + membros) + PUT (add/remove membros em batch)
+- `interacoes/index.js`: GET (timeline por cliente) + POST (registrar + update ultima_interacao_em em batch atômico)
+
+**Bug fixes:**
+- `auth.js`: `redirectUrl` → `forceRedirectUrl` (Clerk deprecation)
+- `router.js`: `DEV` → `window.DEV` (escopo de módulo)
+- `index.html`: import incorreto de `getMe` de `auth.js` → corrigido para `api.js`
+- `index.html`: favicon.ico 404 → favicon.svg (SVG inline)
+
+#### Decisões arquiteturais desta era
+
+**1 — `COALESCE` no PUT de clientes**
+O endpoint `PUT /api/v1/clientes/:id` usa `COALESCE(?, campo)` — atualiza apenas os campos enviados no body, sem sobrescrever campos não enviados com NULL. Reverter para SET direto causaria perda de dados em atualizações parciais.
+
+**2 — `db.batch()` em interações**
+O registro de interação e o update de `ultima_interacao_em` são executados em batch atômico. Sem isso, uma falha parcial deixaria o cliente com `ultima_interacao_em` desatualizado enquanto a interação existia — ou vice-versa.
+
+**3 — BrasilAPI com timeout e absorção de erro**
+O proxy CNPJ aborta em 5s e retorna `{brasilapi_error: true}` em vez de propagar o erro HTTP. O formulário trata isso graciosamente. Nunca expor detalhes do erro interno da BrasilAPI ao cliente (Mago da Abjuração).
+
+#### Correções detectadas pelo Conselho (#2 — Correções do Mago da Abjuração)
+
+**Achado:** 5 endpoints ausentes causavam 404 em todos os fluxos core após o commit inicial de páginas.
+**Resolução (commit faa30f9):** Criados todos os endpoints em lista acima.
+**Por que não reverter:** Sem `clientes/[id].js`, nenhuma ficha de cliente é acessível. Sem `grupos/index.js`, nenhum grupo pode ser listado ou criado. Sem `alertas/[id]/lido.js`, alertas ficam permanentemente pendentes.
+
+#### Ressalva aberta (Sprint 3)
+RN-12 (offline queue via IndexedDB) não implementado. `registrarInteracao()` chama a API diretamente sem fila de sincronização. Sem internet, a interação é perdida. Resolução planejada para Sprint 3.
+
+**Sprint 3 AUTORIZADO:**
+- `public/assets/js/db.js` (IndexedDB wrapper: cache da carteira + fila de sync offline)
+- Offline queue em `cliente.js`: salvar no IDB quando sem rede, sync ao reconectar
+- Service Worker: sincronizar fila pendente ao evento `online`
+- Importação CSV básica (Sprint 4)
