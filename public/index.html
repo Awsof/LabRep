@@ -7,7 +7,7 @@
   <title>LabRep</title>
 
   <link rel="manifest" href="/manifest.json">
-  <link rel="icon" href="/favicon.ico">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 
   <!-- Fontes (subset mínimo para performance) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -87,9 +87,9 @@
     window.DEV = DEV;
 
     import { initRouter } from '/assets/js/router.js';
-    import { signOut, getMe } from '/assets/js/auth.js';
+    import { signOut } from '/assets/js/auth.js';
     import { setState } from '/assets/js/state.js';
-    import { getMe as apiGetMe } from '/assets/js/api.js';
+    import { getMe } from '/assets/js/api.js';
 
     // Logout
     document.getElementById('btn-logout')?.addEventListener('click', signOut);
@@ -97,7 +97,7 @@
     // Carrega dados do usuário logado no estado global
     async function bootstrap() {
       try {
-        const me = await apiGetMe();
+        const me = await getMe();
         if (me) setState({ user: me, plano: me.plano, repId: me.id });
       } catch {
         // silent — router vai pedir login se necessário
