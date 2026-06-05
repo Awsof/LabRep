@@ -26,7 +26,7 @@ export async function getUser() {
 export async function requireLogin() {
   const clerk = await initClerk();
   if (!clerk.user) {
-    clerk.openSignIn({ redirectUrl: window.location.href });
+    clerk.openSignIn({ forceRedirectUrl: window.location.href });
     return false;
   }
   return true;

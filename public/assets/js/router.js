@@ -67,7 +67,7 @@ async function navigate() {
         <p style="color:var(--accent)">Erro ao carregar a página.</p>
         <a href="#/" class="btn btn-ghost btn-sm">Voltar ao início</a>
       </div>`;
-    if (DEV) console.error(err); // eslint-disable-line no-undef
+    if (window.DEV) console.error(err);
   }
 
   updateActiveNav(hash);
