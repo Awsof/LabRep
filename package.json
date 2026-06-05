@@ -17,6 +17,9 @@
     "url": "https://github.com/Awsof/LabRep/issues"
   },
   "homepage": "https://github.com/Awsof/LabRep#readme",
+  "engines": {
+    "node": "20.x"
+  },
   "dependencies": {
     "@clerk/backend": "^3.5.0",
     "@libsql/client": "^0.17.3",
