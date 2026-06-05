@@ -36,6 +36,23 @@ export async function requireAuth(req) {
   return { repId, plano: result.rows[0].plano };
 }
 
+export async function verifyTokenOnly(req) {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  if (!token) {
+    const err = new Error('Token ausente');
+    err.status = 401;
+    throw err;
+  }
+  try {
+    const payload = await clerk.verifyToken(token);
+    return payload.sub;
+  } catch {
+    const err = new Error('Token inválido');
+    err.status = 401;
+    throw err;
+  }
+}
+
 export function handleAuthError(res, err) {
   const status = err.status ?? 500;
   const message = status < 500 ? err.message : 'Erro interno do servidor';
