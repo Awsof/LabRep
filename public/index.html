@@ -89,13 +89,17 @@
     import { initRouter } from '/assets/js/router.js';
     import { signOut } from '/assets/js/auth.js';
     import { setState } from '/assets/js/state.js';
-    import { getMe } from '/assets/js/api.js';
+    import { getMe, registrarInteracao } from '/assets/js/api.js';
+    import { initDB, getPendingQueue, removeFromQueue } from '/assets/js/db.js';
+    import { toast } from '/assets/js/toast.js';
 
     // Logout
     document.getElementById('btn-logout')?.addEventListener('click', signOut);
 
     // Carrega dados do usuário logado no estado global
     async function bootstrap() {
+      try { await initDB(); } catch { /* IDB indisponível — modo degradado */ }
+
       try {
         const me = await getMe();
         if (me) setState({ user: me, plano: me.plano, repId: me.id });
@@ -104,6 +108,26 @@
       }
       initRouter();
     }
+
+    // Sync da fila offline ao reconectar
+    window.addEventListener('online', async () => {
+      let queue;
+      try { queue = await getPendingQueue(); } catch { return; }
+      if (!queue.length) return;
+
+      const n = queue.length;
+      toast(`Sincronizando ${n} interaç${n > 1 ? 'ões' : 'ão'}...`, 'info');
+      let ok = 0;
+      for (const entry of queue) {
+        try {
+          const { id: _id, queued_at: _qa, ...payload } = entry;
+          await registrarInteracao(payload);
+          await removeFromQueue(entry.id);
+          ok++;
+        } catch { /* mantém na fila */ }
+      }
+      if (ok) toast(`${ok} interaç${ok > 1 ? 'ões' : 'ão'} sincronizada${ok > 1 ? 's' : ''}`, 'success');
+    });
 
     bootstrap();
 

@@ -1,5 +1,7 @@
 import { getCliente, listarInteracoes, registrarInteracao } from '../api.js';
 import { escHtml, formatCNPJ, tipoLabel, statusLabel } from '../utils.js';
+import { cacheCliente, getCachedCliente, cacheInteracoes, getCachedInteracoes, queueInteracao } from '../db.js';
+import { toast } from '../toast.js';
 
 export async function render(container, { id }) {
   container.innerHTML = `<div class="page-loading"><div class="spinner"></div></div>`;
@@ -9,11 +11,33 @@ export async function render(container, { id }) {
       listarInteracoes(id, { limit: 10 }),
     ]);
     const inters = interData?.data ?? interData ?? [];
+
+    // Persistir em cache para uso offline futuro
+    cacheCliente(id, cliente).catch(() => {});
+    cacheInteracoes(id, inters).catch(() => {});
+
     container.innerHTML = fichaHTML(cliente, inters);
     bindActions(container, cliente, inters);
   } catch (err) {
+    if (!navigator.onLine) {
+      const cached = await getCachedCliente(id).catch(() => null);
+      const cachedInters = await getCachedInteracoes(id).catch(() => []);
+      if (cached) {
+        container.innerHTML = offlineBanner() + fichaHTML(cached, cachedInters);
+        bindActions(container, cached, cachedInters);
+        return;
+      }
+      container.innerHTML = `
+        <p style="color:var(--muted);font-size:0.9rem;">📵 Sem conexão. Abra este cliente online pelo menos uma vez para ver offline.</p>
+        <a href="#/carteira" class="btn btn-ghost btn-sm" style="margin-top:12px;">← Carteira</a>`;
+      return;
+    }
     container.innerHTML = `<p style="color:var(--accent);">Erro: ${escHtml(err.message)}</p><a href="#/carteira" class="btn btn-ghost btn-sm" style="margin-top:12px;">← Carteira</a>`;
   }
+}
+
+function offlineBanner() {
+  return `<div style="background:rgba(200,75,24,0.08);border:1px solid var(--accent);border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:0.82rem;color:var(--accent);">📵 Modo offline — dados do cache</div>`;
 }
 
 function fichaHTML(c, inters) {
@@ -148,20 +172,28 @@ function abrirModalInteracao(container, clienteId) {
     if (!tipo) return alert('Selecione o tipo de interação');
     const btn = overlay.querySelector('#btn-salvar-inter');
     btn.disabled = true; btn.textContent = 'Salvando...';
+
+    const payload = {
+      cliente_id: clienteId,
+      tipo,
+      resultado: overlay.querySelector('#resultado-sel').value || null,
+      descricao: overlay.querySelector('#descricao').value.trim() || null,
+      proximo_followup: overlay.querySelector('#followup-sel').value || null,
+    };
+
     try {
-      await registrarInteracao({
-        cliente_id: clienteId,
-        tipo,
-        resultado: overlay.querySelector('#resultado-sel').value || null,
-        descricao: overlay.querySelector('#descricao').value.trim() || null,
-        proximo_followup: overlay.querySelector('#followup-sel').value || null,
-      });
+      await registrarInteracao(payload);
       overlay.remove();
-      // Recarrega a página do cliente
       window.location.hash = window.location.hash;
     } catch (err) {
-      btn.disabled = false; btn.textContent = 'Salvar interação';
-      alert('Erro: ' + err.message);
+      if (!navigator.onLine) {
+        await queueInteracao(payload).catch(() => {});
+        overlay.remove();
+        toast('Salvo offline — sincronizará ao reconectar', 'info', 5000);
+      } else {
+        btn.disabled = false; btn.textContent = 'Salvar interação';
+        alert('Erro: ' + err.message);
+      }
     }
   });
 }

@@ -1,6 +1,6 @@
 /* LabRep Service Worker — offline-first para dados de campo (RN-12) */
 
-const CACHE = 'labrep-v1';
+const CACHE = 'labrep-v2';
 const STATIC = [
   '/',
   '/assets/css/design-system.css',
@@ -12,6 +12,7 @@ const STATIC = [
   '/assets/js/auth.js',
   '/assets/js/state.js',
   '/assets/js/toast.js',
+  '/assets/js/db.js',
   '/manifest.json',
 ];
 
