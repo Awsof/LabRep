@@ -1,4 +1,4 @@
-import { createClerkClient } from '@clerk/backend';
+import { createClerkClient, verifyToken } from '@clerk/backend';
 import { getDB } from './db.js';
 
 const clerk = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY });
@@ -13,7 +13,7 @@ export async function requireAuth(req) {
 
   let repId;
   try {
-    const payload = await clerk.verifyToken(token);
+    const payload = await verifyToken(token, { secretKey: process.env.CLERK_SECRET_KEY });
     repId = payload.sub;
   } catch {
     const err = new Error('Token inválido');
@@ -44,7 +44,7 @@ export async function verifyTokenOnly(req) {
     throw err;
   }
   try {
-    const payload = await clerk.verifyToken(token);
+    const payload = await verifyToken(token, { secretKey: process.env.CLERK_SECRET_KEY });
     return payload.sub;
   } catch {
     const err = new Error('Token inválido');
