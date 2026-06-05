@@ -1,0 +1,91 @@
+/* ══════════════════════════════════════════════════
+   LabRep — Mobile-First Overrides (RN-09, RN-11)
+   Target: 360px, 1 mão, 3G
+   ══════════════════════════════════════════════════ */
+
+@media (max-width: 767px) {
+  /* Esconde sidebar, mostra bottom nav */
+  .sidebar { display: none; }
+  .bottom-nav { display: block; }
+
+  /* Main sem margem de sidebar, com espaço para bottom nav */
+  .main-content {
+    margin-left: 0;
+    padding: var(--sp-m);
+    padding-bottom: calc(72px + env(safe-area-inset-bottom));
+  }
+
+  /* Grids colapsam para 1 coluna */
+  .grid-2, .grid-3 { grid-template-columns: 1fr; }
+
+  /* Search bar proeminente como tela raiz */
+  .search-hero {
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    padding: var(--sp-m) 0;
+    z-index: 10;
+    border-bottom: 1px solid var(--border);
+    margin: calc(-1 * var(--sp-m));
+    margin-bottom: var(--sp-m);
+    padding: var(--sp-m);
+  }
+
+  .search-hero .input {
+    font-size: 1rem;
+    padding: 14px 16px 14px 44px;
+    border-radius: 12px;
+  }
+
+  /* Ficha rápida mobile — card compacto */
+  .ficha-rapida {
+    border-radius: 12px;
+    background: white;
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .ficha-rapida-header {
+    padding: var(--sp-m);
+    border-bottom: 1px solid var(--border);
+  }
+  .ficha-rapida-actions {
+    display: flex;
+    gap: var(--sp-s);
+    padding: var(--sp-m);
+  }
+  .ficha-rapida-actions .btn { flex: 1; justify-content: center; }
+
+  /* Botões de ação maiores (toque mais fácil) */
+  .btn { min-height: 44px; }
+  .type-btn { min-height: 44px; flex: 1; text-align: center; justify-content: center; }
+
+  /* Modal vira bottom sheet */
+  .modal { max-height: 85vh; border-radius: 20px 20px 0 0; }
+
+  /* Pendências list — card simples */
+  .pendencia-item {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-m);
+    padding: var(--sp-m);
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background var(--t);
+    text-decoration: none;
+    color: inherit;
+  }
+  .pendencia-item:hover { background: var(--bg2); }
+  .pendencia-item:active { background: var(--bg3); }
+
+  /* Toast no topo em mobile */
+  #toast-container { bottom: auto; top: 16px; left: 16px; right: 16px; }
+  .toast { max-width: 100%; }
+}
+
+/* ── Touch-specific ── */
+@media (hover: none) {
+  .card:hover { transform: none; box-shadow: var(--shadow); }
+  .btn-primary:hover { background: var(--accent); }
+}

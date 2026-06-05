@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#c84b18">
+  <title>LabRep</title>
+
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" href="/favicon.ico">
+
+  <!-- Fontes (subset mínimo para performance) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@500;700;800;900&family=IBM+Plex+Mono:wght@400;500&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+
+  <!-- Design System -->
+  <link rel="stylesheet" href="/assets/css/design-system.css">
+  <link rel="stylesheet" href="/assets/css/components.css">
+  <link rel="stylesheet" href="/assets/css/layout.css">
+  <link rel="stylesheet" href="/assets/css/mobile.css">
+</head>
+<body>
+
+  <!-- ── Sidebar (desktop) ── -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="name">LabRep</div>
+      <div class="sub">Sua carteira. Sempre.</div>
+    </div>
+
+    <div class="nav-section">Carteira</div>
+    <a class="nav-item" href="#/"><span class="nav-icon">◈</span> Dashboard</a>
+    <a class="nav-item" href="#/carteira"><span class="nav-icon">⊞</span> Clientes</a>
+    <a class="nav-item" href="#/grupos"><span class="nav-icon">◎</span> Grupos</a>
+    <a class="nav-item" href="#/alertas"><span class="nav-icon">🔔</span> Alertas</a>
+
+    <div class="nav-section">Gestão</div>
+    <a class="nav-item" href="#/pipeline"><span class="nav-icon">⇢</span> Pipeline</a>
+
+    <div class="nav-section">Conta</div>
+    <a class="nav-item" href="#/configuracoes"><span class="nav-icon">⚙</span> Configurações</a>
+    <button class="nav-item" id="btn-logout" style="background:none;border:none;width:100%;text-align:left;cursor:pointer;">
+      <span class="nav-icon">↩</span> Sair
+    </button>
+  </nav>
+
+  <!-- ── Main ── -->
+  <main class="main-content">
+    <div id="app">
+      <!-- conteúdo injetado pelo router -->
+      <div class="page-loading">
+        <div class="spinner"></div>
+        <span>Inicializando...</span>
+      </div>
+    </div>
+  </main>
+
+  <!-- ── Bottom nav (mobile) ── -->
+  <nav class="bottom-nav">
+    <div class="bottom-nav-items">
+      <a class="bottom-nav-item" href="#/">
+        <span class="icon">◈</span>
+        <span>Início</span>
+      </a>
+      <a class="bottom-nav-item" href="#/carteira">
+        <span class="icon">⊞</span>
+        <span>Clientes</span>
+      </a>
+      <a class="bottom-nav-item" href="#/alertas">
+        <span class="icon">🔔</span>
+        <span>Alertas</span>
+      </a>
+      <a class="bottom-nav-item" href="#/pipeline">
+        <span class="icon">⇢</span>
+        <span>Pipeline</span>
+      </a>
+      <a class="bottom-nav-item" href="#/configuracoes">
+        <span class="icon">⚙</span>
+        <span>Conta</span>
+      </a>
+    </div>
+  </nav>
+
+  <script type="module">
+    const DEV = window.location.hostname === 'localhost';
+    window.DEV = DEV;
+
+    import { initRouter } from '/assets/js/router.js';
+    import { signOut, getMe } from '/assets/js/auth.js';
+    import { setState } from '/assets/js/state.js';
+    import { getMe as apiGetMe } from '/assets/js/api.js';
+
+    // Logout
+    document.getElementById('btn-logout')?.addEventListener('click', signOut);
+
+    // Carrega dados do usuário logado no estado global
+    async function bootstrap() {
+      try {
+        const me = await apiGetMe();
+        if (me) setState({ user: me, plano: me.plano, repId: me.id });
+      } catch {
+        // silent — router vai pedir login se necessário
+      }
+      initRouter();
+    }
+
+    bootstrap();
+
+    // Service Worker
+    if ('serviceWorker' in navigator && !DEV) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    }
+  </script>
+</body>
+</html>
