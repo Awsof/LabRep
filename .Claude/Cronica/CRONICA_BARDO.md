@@ -149,8 +149,67 @@ O proxy CNPJ aborta em 5s e retorna `{brasilapi_error: true}` em vez de propagar
 #### Ressalva aberta (Sprint 3)
 RN-12 (offline queue via IndexedDB) não implementado. `registrarInteracao()` chama a API diretamente sem fila de sincronização. Sem internet, a interação é perdida. Resolução planejada para Sprint 3.
 
-**Sprint 3 AUTORIZADO:**
-- `public/assets/js/db.js` (IndexedDB wrapper: cache da carteira + fila de sync offline)
-- Offline queue em `cliente.js`: salvar no IDB quando sem rede, sync ao reconectar
-- Service Worker: sincronizar fila pendente ao evento `online`
-- Importação CSV básica (Sprint 4)
+**Sprint 3 CONCLUÍDO (commit 2c494b8) → ver Era 3 abaixo.**
+
+---
+
+## 📜 O Pergaminho das Correções Críticas
+
+### Correção #2 — 2026-06-05 | Era: Sprint 3
+**Módulo:** `api/lib/auth.js` + `vercel.json`
+**Detectado por:** Beholder (análise de screenshots de produção)
+
+**Bug #3 — `clerk.verifyToken is not a function` → 401 universal:**
+> `createClerkClient()` de `@clerk/backend@3.5.0` retorna objeto com APIs REST (`.users`, `.sessions`) mas NÃO expõe `verifyToken` como método. `verifyToken` é uma função standalone exportada separadamente. A chamada `clerk.verifyToken(token)` gerava `TypeError` capturado e relançado como 401 "Token inválido" — bloqueando 100% dos endpoints autenticados.
+>
+> **Fix:** `import { createClerkClient, verifyToken } from '@clerk/backend'` + chamar `verifyToken(token, { secretKey: process.env.CLERK_SECRET_KEY })` diretamente em `requireAuth()` e `verifyTokenOnly()`.
+
+**Bug #4 — 404 em arquivos de página (carteira.js, cliente.js etc.):**
+> Sem `"outputDirectory": "public"` no `vercel.json`, Vercel não sabia que os estáticos estavam em `public/`. Arquivos em `public/assets/js/pages/*.js` eram acessíveis apenas em `/public/assets/...`, nunca em `/assets/...`. A rewrite SPA `/((?!api/).*)` capturava essas URLs e retornava HTML. Resultado: browser recebia HTML quando esperava ES Module → erro de parse → "Erro ao carregar a página".
+>
+> **Fix:** `"outputDirectory": "public"` + rewrite destination de `/public/index.html` para `/index.html`.
+
+> **Por que não reverter:** `verifyToken` como standalone é a API correta de `@clerk/backend@3.x`. `outputDirectory` é a forma canônica de declarar frontend estático no Vercel para projetos sem build step. Qualquer rollback recriaria os mesmos erros.
+
+---
+
+## 📜 Era 3 — Sprint 3: RN-12 Offline Queue (2026-06-05)
+**Decreto do Arquimago:** SELADO ✅ — Decreto #3
+
+#### Artefatos entregues
+
+**Novo arquivo:**
+- `public/assets/js/db.js`: IndexedDB `labrep-db` versão 1, 4 stores (`sync_queue`, `clientes_cache`, `interacoes_cache`, `meta`). Singleton `_dbPromise`. API: `initDB`, `queueInteracao`, `getPendingQueue`, `removeFromQueue`, `cacheCliente`, `getCachedCliente`, `cacheInteracoes`, `getCachedInteracoes`.
+
+**Modificados:**
+- `public/assets/js/pages/cliente.js`: cacheia cliente + interações após carregamento bem-sucedido; serve do IDB com banner offline quando sem rede; enfileira interações no IDB quando offline em vez de falhar.
+- `public/sw.js`: bump `labrep-v1` → `labrep-v2`; `db.js` adicionado ao STATIC (fix bug anterior onde `toast.js` em STATIC causava falha silenciosa no install).
+- `public/index.html`: `initDB()` antes do router; listener `window.addEventListener('online')` drena `sync_queue` com loop sequencial (ordem cronológica preservada) e toasts de progresso.
+
+**Auto-registro de usuário (Correção Crítica #2B):**
+- `api/lib/auth.js`: exporta `verifyTokenOnly()` — verifica JWT sem exigir usuário na tabela.
+- `api/v1/auth/me.js`: se usuário não encontrado na tabela, busca perfil no Clerk e faz INSERT automático com `plano='free'`. Elimina necessidade de webhook de registro.
+
+#### Decisões arquiteturais desta era
+
+**1 — `verifyToken` como standalone (não método de `clerk`)**
+`@clerk/backend@3.x` exporta `verifyToken(token, options)` como função standalone que requer `secretKey` como opção. O objeto retornado por `createClerkClient` não possui este método. Esta é a API correta da versão instalada — não é workaround.
+
+**2 — Sync sequencial no listener `online` (não `Promise.all`)**
+Interações sincronizam uma a uma via `for...of`, preservando ordem cronológica. `Promise.all` poderia criar interações fora de ordem no histórico do cliente. O custo de latência é aceitável dado o volume esperado na fila.
+
+**3 — `outputDirectory: "public"` sem alteração estrutural**
+A adição de `outputDirectory` ao `vercel.json` não requer mover nenhum arquivo. O Vercel passa a servir `public/` como raiz estática enquanto as funções em `api/` continuam no mesmo local. Zero refatoração de paths no código.
+
+**4 — Auto-registro no `me.js` sem webhook**
+O endpoint `/api/v1/auth/me` é a primeira chamada autenticada em todo carregamento do app (via `bootstrap()`). Usar este endpoint como ponto de auto-registro elimina a necessidade de webhook Clerk, reduz a complexidade de infraestrutura e é atômico com a primeira sessão válida do usuário.
+
+#### Ressalvas abertas (Sprint 4)
+- Conflito multi-device: interações offline de dois dispositivos do mesmo rep sincronizam sem check de duplicata. Aceitável no MVP — representantes usam um dispositivo primário.
+- CSV export (`api/v1/exportar/csv.js`) ainda não implementado.
+- Importação CSV básica (Sprint 4).
+
+**Sprint 4 AUTORIZADO:**
+- `api/v1/exportar/csv.js`: stream CSV com BOM para Excel
+- `api/v1/webhook/clerk.js`: webhook Clerk como alternativa ao auto-registro (Sprint 4 opção)
+- Dashboard melhorias: contadores reais de clientes, pipeline preview
