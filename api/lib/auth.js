@@ -3,6 +3,18 @@ import { getDB } from './db.js';
 
 const clerk = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY });
 
+async function _verifyJWT(token) {
+  try {
+    const payload = await verifyToken(token, { secretKey: process.env.CLERK_SECRET_KEY });
+    return payload.sub;
+  } catch (e) {
+    console.error('[auth] verifyToken failed:', e?.message ?? e);
+    const err = new Error('Token inválido');
+    err.status = 401;
+    throw err;
+  }
+}
+
 export async function requireAuth(req) {
   const token = req.headers.authorization?.replace('Bearer ', '');
   if (!token) {
@@ -11,15 +23,7 @@ export async function requireAuth(req) {
     throw err;
   }
 
-  let repId;
-  try {
-    const payload = await verifyToken(token, { secretKey: process.env.CLERK_SECRET_KEY });
-    repId = payload.sub;
-  } catch {
-    const err = new Error('Token inválido');
-    err.status = 401;
-    throw err;
-  }
+  const repId = await _verifyJWT(token);
 
   const db = getDB();
   const result = await db.execute({
@@ -43,14 +47,7 @@ export async function verifyTokenOnly(req) {
     err.status = 401;
     throw err;
   }
-  try {
-    const payload = await verifyToken(token, { secretKey: process.env.CLERK_SECRET_KEY });
-    return payload.sub;
-  } catch {
-    const err = new Error('Token inválido');
-    err.status = 401;
-    throw err;
-  }
+  return _verifyJWT(token);
 }
 
 export function handleAuthError(res, err) {
