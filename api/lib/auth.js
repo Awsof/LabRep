@@ -52,6 +52,7 @@ export async function verifyTokenOnly(req) {
 
 export function handleAuthError(res, err) {
   const status = err.status ?? 500;
+  if (status >= 500) console.error('[api] error:', err?.message ?? err);
   const message = status < 500 ? err.message : 'Erro interno do servidor';
   res.status(status).json({ error: message });
 }
