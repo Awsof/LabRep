@@ -1,6 +1,6 @@
-import { requireAuth, handleAuthError } from '../../lib/auth.js';
-import { getDB } from '../../lib/db.js';
-import { sanitize, generateId } from '../../lib/validate.js';
+import { requireAuth, handleAuthError } from '../../_lib/auth.js';
+import { getDB } from '../../_lib/db.js';
+import { sanitize, generateId } from '../../_lib/validate.js';
 
 export default async function handler(req, res) {
   try {

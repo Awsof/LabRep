@@ -1,6 +1,6 @@
 import { createClerkClient } from '@clerk/backend';
-import { verifyTokenOnly, handleAuthError } from '../../lib/auth.js';
-import { getDB } from '../../lib/db.js';
+import { verifyTokenOnly, handleAuthError } from '../../_lib/auth.js';
+import { getDB } from '../../_lib/db.js';
 
 const clerk = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY });
 

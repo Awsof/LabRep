@@ -1,7 +1,7 @@
-import { requireAuth, handleAuthError } from '../../lib/auth.js';
-import { getDB } from '../../lib/db.js';
-import { validateCNPJ, sanitize, generateId } from '../../lib/validate.js';
-import { checkClienteLimit } from '../../lib/planGuard.js';
+import { requireAuth, handleAuthError } from '../../_lib/auth.js';
+import { getDB } from '../../_lib/db.js';
+import { validateCNPJ, sanitize, generateId } from '../../_lib/validate.js';
+import { checkClienteLimit } from '../../_lib/planGuard.js';
 
 export default async function handler(req, res) {
   try {

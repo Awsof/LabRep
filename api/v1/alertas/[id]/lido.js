@@ -1,5 +1,5 @@
-import { requireAuth, handleAuthError } from '../../../../lib/auth.js';
-import { getDB } from '../../../../lib/db.js';
+import { requireAuth, handleAuthError } from '../../../_lib/auth.js';
+import { getDB } from '../../../_lib/db.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'PATCH') return res.status(405).json({ error: 'Método não permitido' });

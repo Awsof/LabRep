@@ -1,4 +1,4 @@
-import { getDB } from '../../lib/db.js';
+import { getDB } from '../../_lib/db.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).end();
